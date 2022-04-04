@@ -33,16 +33,6 @@ namespace ft
 			for (size_type i = 0; i < _size; ++i)
 				allo.construct(_begin + i, x._begin[i]);
 		}
-		// template <class InputIterator>
-        // vector (InputIterator first, InputIterator last, const allocator_type& alloc = allocator_type())
-		// {
-		// 	_size = last - first;
-		// 	_begin = alloc.allocate(_size);
-		// 	_end = _begin + _size;
-		// 	_end_of_storage = _end;
-		// 	for (InputIterator	it = first; it != last; ++it)
-		// 		alloc.construct(_begin + (it - first), *it);
-		// }
 		~vector()
 		{
 			for (size_type i = 0; i < _size; ++i)
@@ -92,13 +82,14 @@ namespace ft
 				for (size_type i = n; i < _size; ++i)
 					allo.destroy(_begin + i);
 				_size = n;
-				_end_of_storage = _begin + _size;
+				_end_of_storage = _begin + _size + 1;
 			}
 			else
 			{
 				if (n > capacity())
 				{
-					pointer tmp = allo.allocate(n);
+					size_type new_capacity = n < capacity() * 2 ? capacity() * 2 : n;
+					pointer tmp = allo.allocate(new_capacity);
 					for (size_type i = 0; i < _size; ++i)
 						allo.construct(tmp + i, _begin[i]);
 					for (size_type i = 0; i < _size; ++i)
@@ -106,7 +97,7 @@ namespace ft
 					allo.deallocate(_begin, _size);
 					_begin = tmp;
 					_end = _begin + n;
-					_end_of_storage = _end;
+					_end_of_storage = _begin + new_capacity;
 					_size = n;
 				}
 				else
@@ -174,6 +165,66 @@ namespace ft
 		const_reference back() const
 		{
 			return _begin[_size - 1];
+		}
+		//modifier
+		//______assign_______________________//
+		template <class InputIterator>
+  		void assign (InputIterator first, InputIterator last)
+		{
+			size_type n = last - first;
+			if (n > capacity())
+			{
+				pointer tmp = allo.allocate(n);
+				for (size_type i = 0; i < n; ++i)
+					allo.construct(tmp + i, first[i]);
+				for (size_type i = 0; i < _size; ++i)
+					allo.destroy(_begin + i);
+				allo.deallocate(_begin, _size);
+				_begin = tmp;
+				_end = _begin + n;
+				_end_of_storage = _end;
+				_size = n;
+			}
+			else
+			{
+				for (size_type i = 0; i < _size; ++i)
+					allo.destroy(_begin + i);
+				_size = n;
+				_end = _begin + n;
+				_end_of_storage = _end;
+				for (size_type i = 0; i < _size; ++i)
+					allo.construct(_begin + i, first[i]);
+			}
+		}
+		void assign (size_type n, const value_type& val)
+		{
+			if (n > capacity())
+			{
+				pointer tmp = allo.allocate(n);
+				for (size_type i = 0; i < n; ++i)
+					allo.construct(tmp + i, val);
+				for (size_type i = 0; i < _size; ++i)
+					allo.destroy(_begin + i);
+				allo.deallocate(_begin, _size);
+				_begin = tmp;
+				_end = _begin + n;
+				_end_of_storage = _end;
+				_size = n;
+			}
+			else
+			{
+				for (size_type i = 0; i < _size; ++i)
+					allo.destroy(_begin + i);
+				_size = n;
+				_end = _begin + n;
+				_end_of_storage = _end;
+				for (size_type i = 0; i < _size; ++i)
+					allo.construct(_begin + i, val);
+			}
+		}
+		void push_back (const value_type& val)
+		{
+			
 		}
 	private:
 		Alloc allo;
