@@ -7,6 +7,7 @@ namespace ft
 	template <typename T, typename Alloc = std::allocator<T> >
 	class vector
 	{
+	public:
 		typedef T		value_type;
 		typedef Alloc	allocator_type;
 		typedef size_t	size_type;
@@ -14,10 +15,10 @@ namespace ft
 		typedef typename allocator_type::const_reference const_reference;
 		typedef typename allocator_type::pointer pointer;
 		typedef typename allocator_type::const_pointer const_pointer;
-		typedef typename ft::vector_iterator<pointer> iterator;
-		typedef typename ft::vector_iterator<const_pointer> const_iterator;
-
-	public:
+		typedef typename ft::iterator<pointer> iterator;
+		typedef typename ft::reverse_iterator<iterator> reverse_iterator;
+		typedef typename ft::iterator<const_pointer> const_iterator;
+		typedef typename ft::reverse_iterator<const_iterator> const_reverse_iterator;
 		explicit vector (const allocator_type& alloc = allocator_type()) : _begin(NULL), _end(NULL), _end_of_storage(NULL), allo(alloc){}
 		explicit vector (size_type n, const value_type& val = value_type(), const allocator_type& alloc = allocator_type()) : allo(alloc)
 		{
@@ -28,7 +29,7 @@ namespace ft
 				allo.construct(_begin + i, val);
 		}
 		template <class InputIterator>
-    	vector (typename enable_if<!is_integral<InputIterator>::value, InputIterator>::type first, typename enable_if<!is_integral<InputIterator>::value, InputIterator>::type last,const allocator_type& alloc = allocator_type()) : allo(alloc)
+    	vector (InputIterator first, typename enable_if<!is_integral<InputIterator>::value, InputIterator>::type last,const allocator_type& alloc = allocator_type()) : allo(alloc)
 		{
 			_begin = allo.allocate(last - first);
 			_end = _begin + (last - first);
@@ -70,6 +71,39 @@ namespace ft
 				}
 			}
 			return *this;
+		}
+		//iterators
+		iterator begin()
+		{
+			return iterator(_begin);
+		}
+		const_iterator begin() const
+		{
+			return const_iterator(_begin);
+		}
+		iterator end()
+		{
+			return iterator(_end);
+		}
+		const_iterator end() const
+		{
+			return const_iterator(_end);
+		}
+		reverse_iterator rbegin()
+		{
+			return reverse_iterator(end());
+		}
+		const_reverse_iterator rbegin() const
+		{
+			return const_reverse_iterator(end());
+		}
+		reverse_iterator rend()
+		{
+			return reverse_iterator(begin());
+		}
+		const_reverse_iterator rend() const
+		{
+			return const_reverse_iterator(begin());
 		}
 		//capacity
 		size_type size() const
@@ -177,7 +211,7 @@ namespace ft
 		//modifier
 		//______assign_______________________//
 		template <class InputIterator>
-  		void assign (InputIterator first, InputIterator last)
+  		void assign (InputIterator first, typename enable_if<!is_integral<InputIterator>::value, InputIterator>::type last)
 		{
 			size_type n = last - first;
 			if (n > capacity())
