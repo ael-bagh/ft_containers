@@ -14,6 +14,10 @@ namespace ft
         iterator(): _ptr(NULL) {}
         iterator(pointer ptr): _ptr(ptr) {}
         iterator(const iterator& x): _ptr(x._ptr) {}
+        pointer base() const
+        {
+            return _ptr;
+        }
         iterator& operator= (const iterator& x)
         {
             _ptr = x._ptr;
@@ -106,4 +110,52 @@ namespace ft
         private:
             pointer _ptr;
     };
+    
+    template <class YT>
+    iterator<YT> operator+(typename iterator<YT>::difference_type n, const iterator<YT>& x)
+    {
+        return iterator<YT>(x.base() + n);
+    }
+
+    template <class YT>
+    iterator<YT> operator-(typename iterator<YT>::difference_type n, const iterator<YT>& x)
+    {
+        return iterator<YT>(x.base() - n);
+    }
+
+    template <class YT, class XT>
+    typename iterator<YT>::difference_type operator-(const iterator<YT>& y, const iterator<XT>& x)
+    {
+        return (y.base() - x.base());
+    }
+    template <class YT, class XT>
+    bool operator!=(const iterator<YT>& y, const iterator<XT>& x)
+    {
+        return (y.base() != x.base());
+    }
+    template <class YT, class XT>
+    bool operator==(const iterator<YT>& y, const iterator<XT>& x)
+    {
+        return (y.base() == x.base());
+    }
+    template <class YT, class XT>
+    bool operator<=(const iterator<YT>& y, const iterator<XT>& x)
+    {
+        return (y.base() <= x.base());
+    }
+    template <class YT, class XT>
+    bool operator>=(const iterator<YT>& y, const iterator<XT>& x)
+    {
+        return (y.base() >= x.base());
+    }
+    template <class YT, class XT>
+    bool operator<(const iterator<YT>& y, const iterator<XT>& x)
+    {
+        return (y.base() < x.base());
+    }
+    template <class YT, class XT>
+    bool operator>(const iterator<YT>& y, const iterator<XT>& x)
+    {
+        return (y.base() > x.base());
+    }
 }

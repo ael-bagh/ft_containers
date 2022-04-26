@@ -116,39 +116,6 @@ namespace ft
 		{
 			return _end_of_storage - _begin;
 		}
-		void resize (size_type n, value_type val = value_type())
-		{
-			if (n < size())
-			{
-				for (size_type i = n; i < size(); ++i)
-					allo.destroy(_begin + i);
-				_end_of_storage = _begin + size() + 1;
-			}
-			else
-			{
-				if (n > capacity())
-				{
-					size_type new_capacity = n < capacity() * 2 ? capacity() * 2 : n;
-					pointer tmp = allo.allocate(new_capacity);
-					for (size_type i = 0; i < size(); ++i)
-						allo.construct(tmp + i, _begin[i]);
-					for (size_type i = 0; i < size(); ++i)
-						allo.destroy(_begin + i);
-					allo.deallocate(_begin, size());
-					_begin = tmp;
-					_end = _begin + n;
-					_end_of_storage = _begin + new_capacity;
-
-				}
-				else
-				{
-					for (size_type i = size(); i < n; ++i)
-						allo.construct(_begin + i, val);
-					_end = _begin + n;
-					_end_of_storage = _end;
-				}
-			}
-		}
 		bool empty() const
 		{
 			return size() == 0;
@@ -167,6 +134,23 @@ namespace ft
 				_begin = tmp;
 				_end = _begin + new_size;
 				_end_of_storage = _begin + n;
+			}
+		}
+		void resize (size_type n, value_type val = value_type())
+		{
+			if (n < size())
+			{
+				for (size_type i = n; i < size(); ++i)
+					allo.destroy(_begin + i);
+				_end = _begin + n;
+			}
+			else if (n > size())
+			{
+				if (n > capacity())
+					reserve(n);
+				for (size_type i = size(); i < n; ++i)
+					allo.construct(_begin + i, val);
+				_end = _begin + n;
 			}
 		}
 		//element access
@@ -380,7 +364,7 @@ namespace ft
 				allo.destroy(_begin + i);
 			for (size_type i = pos; i < size(); ++i)
 				allo.construct(_begin + i, _begin[i + std::distance(first, last)]);
-			allo.destroy(_end--);
+			allo.destroy(_end -= std::distance(first, last));
 			return _begin + pos;
 		}
 		void clear()
@@ -456,4 +440,39 @@ namespace ft
 				allo.construct(_begin + i, *first++);
 		}
 	};
+	template <class T, class Alloc>
+  	bool operator== (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
+	{
+		if (lhs.size() != rhs.size())
+			return false;
+		for (size_t i = 0; i < lhs.size(); i++)
+			if (lhs[i] != rhs[i])
+				return false;
+		return true;
+	}
+	template <class T, class Alloc>
+  	bool operator!= (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
+	{
+		return !(lhs == rhs);
+	}
+	template <class T, class Alloc>
+  	bool operator<  (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
+	{
+	  return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+	}
+	template <class T, class Alloc>
+  	bool operator<= (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
+	{
+	  return !(rhs < lhs);
+	}	
+	template <class T, class Alloc>
+  	bool operator>  (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
+	{
+	  return rhs < lhs;
+	}		
+	template <class T, class Alloc>
+  	bool operator>= (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
+	{
+	  return !(lhs < rhs);
+	}
 }
