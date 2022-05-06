@@ -56,17 +56,14 @@ namespace ft
 		{
 			if (this != &x)
 			{
-				if (size())
-				{
-					for (size_type i = 0; i < size(); ++i)
-						allo.destroy(_begin + i);
-					allo.deallocate(_begin, capacity());
-					_begin = allo.allocate(x.capacity());
-					_end = _begin + x.size();
-					_end_of_storage = _begin + x.capacity();
-					for (size_type i = 0; i < x.size(); ++i)
-						allo.construct(_begin + i, x._begin[i]);
-				}
+				for (size_type i = 0; i < size(); ++i)
+					allo.destroy(_begin + i);
+				allo.deallocate(_begin, capacity());
+				_begin = allo.allocate(x.capacity());
+				_end = _begin + x.size();
+				_end_of_storage = _begin + x.capacity();
+				for (size_type i = 0; i < x.size(); ++i)
+					allo.construct(_begin + i, x._begin[i]);
 			}
 			return *this;
 		}
@@ -122,36 +119,39 @@ namespace ft
 		}
 		void reserve (size_type n)
 		{
+			if (n > max_size())
+				throw std::length_error("");
 			if (n > capacity())
 			{
-				pointer tmp = allo.allocate(n);
-				for (size_type i = 0; i < size(); ++i)
+				size_type new_capacity = ((n > capacity() * 2) ? n : capacity() * 2);
+				pointer tmp = allo.allocate(new_capacity);
+				size_type new_size = size();
+				for (size_type i = 0; i < size(); i++)
 					allo.construct(tmp + i, _begin[i]);
-				for (size_type i = 0; i < size(); ++i)
+				for (size_type i = 0; i < size(); i++)
 					allo.destroy(_begin + i);
 				allo.deallocate(_begin, size());
-				size_type new_size = size();
 				_begin = tmp;
 				_end = _begin + new_size;
-				_end_of_storage = _begin + n;
+				_end_of_storage = _begin + new_capacity;
 			}
 		}
 		void resize (size_type n, value_type val = value_type())
 		{
-			if (n < size())
+			size_type old_size = size();
+			if (n < old_size)
 			{
-				for (size_type i = n; i < size(); ++i)
+				for (size_type i = n; i < size(); i++)
 					allo.destroy(_begin + i);
-				_end = _begin + n;
 			}
 			else if (n > size())
 			{
 				if (n > capacity())
 					reserve(n);
-				for (size_type i = size(); i < n; ++i)
+				for (size_type i = old_size; i < n; i++)
 					allo.construct(_begin + i, val);
-				_end = _begin + n;
 			}
+			_end = _begin + n;
 		}
 		//element access
 		reference operator[] (size_type n)
@@ -227,7 +227,7 @@ namespace ft
 			size_type new_size = size() + 1;
 			if (new_size > capacity())
 			{
-				size_type new_capacity = capacity() * 2;
+				size_type new_capacity = (capacity())?capacity() * 2:1;
 				pointer tmp = allo.allocate(new_capacity);
 				for (size_type i = 0; i < size(); ++i)
 					allo.construct(tmp + i, _begin[i]);
@@ -257,18 +257,19 @@ namespace ft
 		}
 		iterator insert (iterator position, const value_type& val)
 		{
-			size_type n = position - _begin;
 			size_type new_size = size() + 1;
+			size_type p = position - _begin;
 			if (new_size > capacity())
 			{
-				size_type new_capacity = capacity() * 2;
+				std::cout << "ana hna" << std::endl;
+				size_type new_capacity = ((new_size > capacity() * 2) ? new_size : capacity() * 2);
 				pointer tmp = allo.allocate(new_capacity);
-				for (size_type i = 0; i < n; ++i)
+				for (size_type i = 0; i < p; i++)
 					allo.construct(tmp + i, _begin[i]);
-				allo.construct(tmp + n, val);
-				for (size_type i = n; i < size(); ++i)
-					allo.construct(tmp + i + 1, _begin[i]);
-				for (size_type i = 0; i < size(); ++i)
+				allo.construct(tmp + p, val);
+				for (size_type i = p + 1 ; i < p + new_size ; i++)
+					allo.construct(tmp + i, _begin[i]);
+				for (size_type i = 0; i < size(); i++)
 					allo.destroy(_begin + i);
 				allo.deallocate(_begin, size());
 				_begin = tmp;
@@ -277,28 +278,28 @@ namespace ft
 			}
 			else
 			{
-				for (size_type i = size(); i > n; --i)
+				for (size_type i = size(); i > p; --i)
 					allo.construct(_begin + i, _begin[i - 1]);
-				allo.construct(_begin + n, val);
+				allo.construct(p, val);
 				++_end;
 			}
-			return _begin + n;
+			return position;
 		}
 		void insert (iterator position, size_type n, const value_type& val)
 		{
 			size_type pos = position - _begin;
 			size_type new_size = size() + n;
-			if (new_size > capacity())
+			if(new_size > capacity())
 			{
-				size_type new_capacity = capacity() * 2;
+				size_type new_capacity = (capacity())?capacity() * 2:1;
 				pointer tmp = allo.allocate(new_capacity);
-				for (size_type i = 0; i < pos; i++)
+				for (size_type i = new_size; i >= pos; i--)
 					allo.construct(tmp + i, _begin[i]);
-				for (size_type i = pos; i < n + pos; i++)
-					allo.construct(tmp + i, val);
-				for (size_type i = pos + n; i < new_size; i++)
-					allo.construct(tmp + i, _begin[i]);
-				for (size_type i = 0; i < size(); ++i)
+				for (size_type i = 0; i < n; i++)
+					allo.construct(tmp + pos + i, val);
+				for (size_type i = pos; i < size(); i++)
+					allo.construct(tmp + i + n, _begin[i]);
+				for (size_type i = 0; i < size(); i++)
 					allo.destroy(_begin + i);
 				allo.deallocate(_begin, size());
 				_begin = tmp;
@@ -307,13 +308,11 @@ namespace ft
 			}
 			else
 			{
-				for (size_type i = pos; i < new_size; i++)
-					allo.construct(_begin + i + n, _begin[i]);
-				for (size_type i = pos; i < n + pos; i++)
-					allo.destroy(_begin + i);
-				for (size_type i = pos; i < n + pos; i++)
-					allo.construct(_begin + i, val);
-				_end = _end + n;
+				for (size_type i = size(); i > pos; --i)
+					_begin[i] = _begin[i - n];
+				for (size_type i = 0; i < n; i++)
+					allo.construct(_begin + pos + i, val);
+				_end += n;
 			}
 		}
 		template <class InputIterator>
