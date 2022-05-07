@@ -278,8 +278,8 @@ namespace ft
 			else
 			{
 				for (size_type i = size(); i > p; --i)
-					allo.construct(_begin + i, _begin[i - 1]);
-				allo.construct(_begin + p, val);
+					_begin[i] = _begin[i - 1];
+				_begin[p]= val;
 				++_end;
 			}
 			return position;
@@ -292,11 +292,11 @@ namespace ft
 			{
 				size_type new_capacity = (capacity())?capacity() * 2:1;
 				pointer tmp = allo.allocate(new_capacity);
-				for (size_type i = new_size; i >= pos; i--)
+				for (size_type i = 0; i < pos - n; ++i)
 					allo.construct(tmp + i, _begin[i]);
-				for (size_type i = 0; i < n; i++)
-					allo.construct(tmp + pos + i, val);
-				for (size_type i = pos; i < size(); i++)
+				for (size_type i = pos - n; i < pos; ++i)
+					allo.construct(tmp + i, val);
+				for (size_type i = pos; i < size(); ++i)
 					allo.construct(tmp + i + n, _begin[i]);
 				for (size_type i = 0; i < size(); i++)
 					allo.destroy(_begin + i);
@@ -318,17 +318,19 @@ namespace ft
     	void insert (iterator position, InputIterator first, typename enable_if<!is_integral<InputIterator>::value, InputIterator>::type last)
 		{
 			size_type pos = position - _begin;
-			size_type new_size = size() + std::distance(first, last);
+			size_type p = pos;
+			size_type distance = std::distance(first, last);
+			size_type new_size = size() + distance;
 			if (new_size > capacity())
 			{
 				size_type new_capacity = capacity() * 2;
 				pointer tmp = allo.allocate(new_capacity);
-				for (size_type i = 0; i < pos; i++)
+				for (size_type i = 0; i < pos - distance; i++)
 					allo.construct(tmp + i, _begin[i]);
 				for (InputIterator it = first; it != last; ++it)
-					allo.construct(tmp + pos++, *it);
+					allo.construct(tmp + p++, *it);
 				for (size_type i = pos; i < size(); i++)
-					allo.construct(tmp + i + std::distance(first, last), _begin[i]);
+					allo.construct(tmp + i + distance, _begin[i]);
 				for (size_type i = 0; i < size(); ++i)
 					allo.destroy(_begin + i);
 				allo.deallocate(_begin, size());
@@ -338,11 +340,11 @@ namespace ft
 			}
 			else
 			{
-				for (size_type i = pos; i < new_size; i++)
-					allo.construct(_begin + i + std::distance(first, last), _begin[i]);
-				for (InputIterator it = first; it != last; ++it)
+				for (size_type i = size(); i > pos; --i)
+					_begin[i] = _begin[i - distance];
+				for (InputIterator it = first; it != last; it++)
 					allo.construct(_begin + pos++, *it);
-				_end = _end + std::distance(first, last);
+				_end += distance;
 			}
 		}
 		iterator erase (iterator position)
