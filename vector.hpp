@@ -261,26 +261,25 @@ namespace ft
 			size_type p = position - _begin;
 			if (new_size > capacity())
 			{
-				std::cout << "ana hna" << std::endl;
 				size_type new_capacity = ((new_size > capacity() * 2) ? new_size : capacity() * 2);
 				pointer tmp = allo.allocate(new_capacity);
-				for (size_type i = 0; i < p; i++)
+				for (size_type i = 0; i < p; ++i)
 					allo.construct(tmp + i, _begin[i]);
 				allo.construct(tmp + p, val);
-				for (size_type i = p + 1 ; i < p + new_size ; i++)
-					allo.construct(tmp + i, _begin[i]);
-				for (size_type i = 0; i < size(); i++)
+				for (size_type i = p; i < size(); ++i)
+					allo.construct(tmp + i + 1, _begin[i]);
+				for (size_type i = 0; i < size(); ++i)
 					allo.destroy(_begin + i);
 				allo.deallocate(_begin, size());
 				_begin = tmp;
 				_end = _begin + new_size;
 				_end_of_storage = _begin + new_capacity;
-			}
+			}	
 			else
 			{
 				for (size_type i = size(); i > p; --i)
 					allo.construct(_begin + i, _begin[i - 1]);
-				allo.construct(p, val);
+				allo.construct(_begin + p, val);
 				++_end;
 			}
 			return position;
