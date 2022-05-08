@@ -193,17 +193,33 @@ namespace ft
 		//modifier
 		//______assign_______________________//
 		template <class InputIterator>
-		void assign(InputIterator first, InputIterator last)
+		void assign (typename ft::enable_if<!ft::is_integral<InputIterator>::value, InputIterator>::type first, InputIterator last)
 		{
-			clear();
-			insert(begin(), first, last);
-		};
-		void assign(size_type n, const value_type &value)
+			size_type	i;
+			
+			for(i = 0; i < size(); i++)
+				allo.destroy(_begin + i);
+			_end = _begin;
+			do_assign(first, last, typename std::iterator_traits<InputIterator>::iterator_category());
+		}
+		void assign (size_type n, const value_type& val)
 		{
-			clear();
-			insert(begin(), n, value);
-		};
-	
+			size_type	i;
+
+			if (n > max_size())
+				throw(std::length_error(std::string("vector::assign")));
+			for(i = 0; i < size(); i++)
+				allo.destroy(_begin + i);
+			if (n > capacity())
+			{
+				allo.deallocate(_begin, capacity());
+				_begin = allo.allocate(n);
+				_end_of_storage = _begin + n;
+			}
+			for (i = 0; i < n; i++)
+				allo.construct(&_begin[i], val);
+			_end = _begin + n;
+		}
 		void push_back (const value_type& val)
 		{
 			size_type new_size = size() + 1;
