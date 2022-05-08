@@ -239,35 +239,43 @@ namespace ft
 		}
 		iterator insert (iterator position, const value_type& val)
 		{
-			size_type i = 0;
-			iterator it = begin();
-			while (it + i != position && i < size())
-				i++;
-			if (capacity() < size() + 1)
-				reserve(size() + 1);
-			size_type j = capacity() - 1;
-			while (j > i)
-			{
-				_begin[j] = _begin[j - 1];
-				j--;
-			}
-			_begin[i] = val;
-			_end++;
-			return (iterator(&_begin[i]));
+			size_type	diff = std::distance(this->begin(), position);
+			insert(position, 1, val);
+			return (this->begin() + diff);
 		}
+		// ? fill
 		void insert (iterator position, size_type n, const value_type& val)
 		{
-			while (n--)
-				position = insert(position, val);
-		}
-		template <class InputIterator>
-    	void insert (iterator position, InputIterator first, typename enable_if<!is_integral<InputIterator>::value, InputIterator>::type last)
-		{
-			while (first != last)
+			size_type	newSize = n + size();
+			size_type	newCapacity = newSize < (2 * capacity() ) ? (2 * capacity() ): newSize;
+			size_type	firstPosition = std::distance(this->begin(), position);
+			size_type	lastPosition = firstPosition + n;
+			size_type	i;
+
+			if (!n)
+				return ;
+			reserve(newSize > capacity() ? newCapacity : newSize);
+			for(i = newSize - 1; i >= lastPosition; i--)
 			{
-				position = insert(position, *first) + 1;
-				++first;
+				if (i >= size())
+					allo.construct(&_begin[i], _begin[i - n]);
+				else
+					_begin[i] = _begin[i - n];
 			}
+			for (i = lastPosition; i > firstPosition; i--)
+			{
+				if (i >= size())
+					allo.construct(&_begin[i - 1], val);
+				else
+					_begin[i - 1 ] = val;
+			}
+			_end = _begin + newSize;
+		}
+		//  ? range
+		template <class InputIterator>
+		void insert (iterator position, typename enable_if<!is_integral<InputIterator>::value, InputIterator>::type first, InputIterator last)
+		{
+			do_insert(position, first, last, typename std::iterator_traits<InputIterator>::iterator_category());
 		}
 		iterator erase (iterator position)
 		{
@@ -302,6 +310,94 @@ namespace ft
 		pointer _end;
 		pointer _end_of_storage;
 
+		///////////////////////////////////////////////////////////////////////////////////////////
+		//insertion
+		template <class InputIterator>
+		void do_insert (iterator position, InputIterator first, InputIterator last, std::input_iterator_tag)
+		{
+			size_type		n = 0;
+			size_type		pos = std::distance(this->begin(), position);
+			value_type		tmp;
+				
+			while(first != last)
+			{
+				push_back(*first++);
+				n++;
+			}
+			for (size_type i = 0; i < n; i++)
+			{
+				tmp = _begin[pos + i];
+				_begin[pos + i] = _begin[size() - n + i];
+				_begin[size() - n + i] = tmp;
+			}
+		}
+		template <class InputIterator>
+		void do_insert (iterator position, InputIterator first, InputIterator last, const std::forward_iterator_tag&)
+		{
+			size_type	n = std::distance(first, last);
+			size_type	newSize = n + size();
+			size_type	firstPosition = std::distance(this->begin(), position);
+			size_type	lastPosition = firstPosition + n;
+				
+			if (!n)
+				return ;
+			if(newSize > capacity())
+			{
+				pointer tmp;
+				size_type newCapacity = newSize < (2 * capacity() ) ? (2 * capacity() ): newSize;
+				size_type i = 0;
+				try
+				{
+					tmp = allo.allocate(newCapacity);
+					
+					while(i < firstPosition)
+					{
+						allo.construct(tmp + i, _begin[i]);
+						i++;
+					}
+					while(i < lastPosition)
+					{
+						allo.construct(tmp + i, *(first++));
+						i++;
+					}
+					while(i < size() + n)
+					{
+						allo.construct(tmp + i, _begin[i - n]);
+						i++;
+					}
+				}
+				catch(...)
+				{
+					while(i-- > 0)
+						allo.destroy(tmp + i);
+					allo.deallocate(tmp, newCapacity);
+					throw;
+				}
+				i = 0;
+				while(i < size())
+					allo.destroy(_begin + i++);
+				allo.deallocate(_begin, capacity());
+				_begin = tmp;
+				_end = _begin + newSize;
+				_end_of_storage = _begin + newCapacity;
+			}
+			else
+			{
+					vector tmp = *this;
+					size_type i = firstPosition;
+					while(i < lastPosition)
+					{
+						allo.construct(_begin + i, *(first++));
+						i++;
+					}
+					while(i < size() + n)
+					{
+						allo.construct(_begin + i, tmp._begin[i - n]);
+						i++;
+					}
+					_end = _begin + newSize;
+			}
+		}
 		///////////////////////////////////////////////////////////////////////////////////////////
 		template <class IT>
 
