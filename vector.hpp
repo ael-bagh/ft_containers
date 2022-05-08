@@ -305,12 +305,15 @@ namespace ft
 		}
 		iterator erase (iterator first, iterator last)
 		{
-			while (first != last)
-			{
-				erase(first);
-				last--;
-			}
-			return (iterator(first));
+			size_type	start = first - this->begin();
+			size_type	n = last - first;
+			size_type	end = start + n;
+
+			for(size_type i = 0; i < size() && end + i < size(); ++i)
+				_begin[start + i] = _begin[end + i];
+			for(size_type i = 0; i < n ; ++i)
+				pop_back();
+			return(first);
 		}
 		void clear()
 		{
@@ -327,6 +330,30 @@ namespace ft
 		pointer _end_of_storage;
 
 		///////////////////////////////////////////////////////////////////////////////////////////
+		//assign
+		template <class InputIterator>
+		void do_assign (InputIterator first, InputIterator last, const std::forward_iterator_tag&)
+		{
+			size_type 	n;
+			size_type	i;
+
+			n = std::distance(first, last);
+			if (capacity() < n)
+			{
+				_alloc.deallocate(_begin, capacity());
+				_begin = allo.allocate(n);
+				_capacity = n;
+			}
+			for (i = 0; i < n; i++)
+				_alloc.construct(&_begin[i],*first++);
+			_size = _begin + n;
+		}
+		template <class InputIterator>
+		void do_assign (InputIterator first, InputIterator last, const std::input_iterator_tag&)
+		{
+			while(first != last)
+				push_back(*first++);
+		}
 		//insertion
 		template <class InputIterator>
 		void do_insert (iterator position, InputIterator first, InputIterator last, std::input_iterator_tag)
