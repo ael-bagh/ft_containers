@@ -193,35 +193,17 @@ namespace ft
 		//modifier
 		//______assign_______________________//
 		template <class InputIterator>
-  		void assign (InputIterator first, typename enable_if<!is_integral<InputIterator>::value, InputIterator>::type last)
+		void assign(InputIterator first, InputIterator last)
 		{
-			typename ft::iterator_traits<InputIterator>::iterator_category cat;
-			__internal_assign <InputIterator> (first, last, cat);
-		}
-		void assign (size_type n, const value_type& val)
+			clear();
+			insert(begin(), first, last);
+		};
+		void assign(size_type n, const value_type &value)
 		{
-			if (n > capacity())
-			{
-				pointer tmp = allo.allocate(n);
-				for (size_type i = 0; i < n; ++i)
-					allo.construct(tmp + i, val);
-				for (size_type i = 0; i < size(); ++i)
-					allo.destroy(_begin + i);
-				allo.deallocate(_begin, size());
-				_begin = tmp;
-				_end = _begin + n;
-				_end_of_storage = _end;
-			}
-			else
-			{
-				for (size_type i = 0; i < size(); ++i)
-					allo.destroy(_begin + i);
-				_end = _begin + n;
-				_end_of_storage = _end;
-				for (size_type i = 0; i < size(); ++i)
-					allo.construct(_begin + i, val);
-			}
-		}
+			clear();
+			insert(begin(), n, value);
+		};
+	
 		void push_back (const value_type& val)
 		{
 			size_type new_size = size() + 1;
@@ -257,94 +239,34 @@ namespace ft
 		}
 		iterator insert (iterator position, const value_type& val)
 		{
-			size_type new_size = size() + 1;
-			size_type p = position - _begin;
-			if (new_size > capacity())
+			size_type i = 0;
+			iterator it = begin();
+			while (it + i != position && i < size())
+				i++;
+			if (capacity() < size() + 1)
+				reserve(size() + 1);
+			size_type j = capacity() - 1;
+			while (j > i)
 			{
-				size_type new_capacity = ((new_size > capacity() * 2) ? new_size : capacity() * 2);
-				pointer tmp = allo.allocate(new_capacity);
-				for (size_type i = 0; i < p; ++i)
-					allo.construct(tmp + i, _begin[i]);
-				allo.construct(tmp + p, val);
-				for (size_type i = p; i < size(); ++i)
-					allo.construct(tmp + i + 1, _begin[i]);
-				for (size_type i = 0; i < size(); ++i)
-					allo.destroy(_begin + i);
-				allo.deallocate(_begin, size());
-				_begin = tmp;
-				_end = _begin + new_size;
-				_end_of_storage = _begin + new_capacity;
-			}	
-			else
-			{
-				for (size_type i = size(); i > p; --i)
-					_begin[i] = _begin[i - 1];
-				_begin[p]= val;
-				++_end;
+				_begin[j] = _begin[j - 1];
+				j--;
 			}
-			return position;
+			_begin[i] = val;
+			_end++;
+			return (iterator(&_begin[i]));
 		}
 		void insert (iterator position, size_type n, const value_type& val)
 		{
-			size_type pos = position - _begin;
-			size_type new_size = size() + n;
-			if(new_size > capacity())
-			{
-				size_type new_capacity = (capacity())?capacity() * 2:1;
-				pointer tmp = allo.allocate(new_capacity);
-				for (size_type i = 0; i < pos - n; ++i)
-					allo.construct(tmp + i, _begin[i]);
-				for (size_type i = pos - n; i < pos; ++i)
-					allo.construct(tmp + i, val);
-				for (size_type i = pos; i < size(); ++i)
-					allo.construct(tmp + i + n, _begin[i]);
-				for (size_type i = 0; i < size(); i++)
-					allo.destroy(_begin + i);
-				allo.deallocate(_begin, size());
-				_begin = tmp;
-				_end = _begin + new_size;
-				_end_of_storage = _begin + new_capacity;
-			}
-			else
-			{
-				for (size_type i = size(); i > pos; --i)
-					_begin[i] = _begin[i - n];
-				for (size_type i = 0; i < n; i++)
-					allo.construct(_begin + pos + i, val);
-				_end += n;
-			}
+			while (n--)
+				position = insert(position, val);
 		}
 		template <class InputIterator>
     	void insert (iterator position, InputIterator first, typename enable_if<!is_integral<InputIterator>::value, InputIterator>::type last)
 		{
-			size_type pos = position - _begin;
-			size_type p = pos;
-			size_type distance = std::distance(first, last);
-			size_type new_size = size() + distance;
-			if (new_size > capacity())
+			while (first != last)
 			{
-				size_type new_capacity = capacity() * 2;
-				pointer tmp = allo.allocate(new_capacity);
-				for (size_type i = 0; i < pos - distance; i++)
-					allo.construct(tmp + i, _begin[i]);
-				for (InputIterator it = first; it != last; ++it)
-					allo.construct(tmp + p++, *it);
-				for (size_type i = pos; i < size(); i++)
-					allo.construct(tmp + i + distance, _begin[i]);
-				for (size_type i = 0; i < size(); ++i)
-					allo.destroy(_begin + i);
-				allo.deallocate(_begin, size());
-				_begin = tmp;
-				_end = _begin + new_size;
-				_end_of_storage = _begin + new_capacity;
-			}
-			else
-			{
-				for (size_type i = size(); i > pos; --i)
-					_begin[i] = _begin[i - distance];
-				for (InputIterator it = first; it != last; it++)
-					allo.construct(_begin + pos++, *it);
-				_end += distance;
+				position = insert(position, *first) + 1;
+				++first;
 			}
 		}
 		iterator erase (iterator position)
@@ -359,19 +281,16 @@ namespace ft
 		}
 		iterator erase (iterator first, iterator last)
 		{
-			size_type pos = first - _begin;
-			for (size_type i = pos; i < size(); ++i)
-				allo.destroy(_begin + i);
-			for (size_type i = pos; i < size(); ++i)
-				allo.construct(_begin + i, _begin[i + std::distance(first, last)]);
-			allo.destroy(_end -= std::distance(first, last));
-			return _begin + pos;
+			while (first != last)
+			{
+				erase(first);
+				last--;
+			}
+			return (iterator(first));
 		}
 		void clear()
 		{
-			for (size_type i = 0; i < size(); ++i)
-				allo.destroy(_begin + i);
-			_end = _begin;
+			erase(begin(), end());
 		}
 		allocator_type get_allocator() const
 		{
@@ -385,41 +304,7 @@ namespace ft
 
 		///////////////////////////////////////////////////////////////////////////////////////////
 		template <class IT>
-		void __internal_assign (IT first, IT last, std::input_iterator_tag)
-		{
-			while (first != last)
-			{
-				push_back(*first);
-				++first;
-			}
-		}
-		template <class IT>
-		void __internal_assign (IT first, IT last, std::forward_iterator_tag)
-		{
-			size_type n = std::distance(first, last);
-			if (n > capacity())
-			{
-				pointer tmp = allo.allocate(n);
-				for (size_type i = 0; i < n; i++)
-					allo.construct(tmp + i, *first++);
-				for (size_type i = 0; i < size(); i++)
-					allo.destroy(_begin + i);
-				allo.deallocate(_begin, size());
-				_begin = tmp;
-				_end = _begin + n;
-				_end_of_storage = _end;
-			}
-			else
-			{
-				for (size_type i = 0; i < size(); i++)
-					allo.destroy(_begin + i);
-				_end = _begin + n;
-				_end_of_storage = _end;
-				for (size_type i = 0; i < size(); i++)
-					allo.construct(_begin + i, *first++);
-			}
-		}
-		template <class IT>
+
 		void __internal_construct (IT first, IT last, std::input_iterator_tag)
 		{
 			while (first != last)
@@ -439,6 +324,11 @@ namespace ft
 			for (size_type i = 0; i < n; i++)
 				allo.construct(_begin + i, *first++);
 		}
+	};
+	template <class T, class Alloc>
+	void swap(vector<T, Alloc> &x, vector<T, Alloc> &y)
+	{
+		x.swap(y);
 	};
 	template <class T, class Alloc>
   	bool operator== (const vector<T,Alloc>& lhs, const vector<T,Alloc>& rhs)
