@@ -340,13 +340,13 @@ namespace ft
 			n = std::distance(first, last);
 			if (capacity() < n)
 			{
-				_alloc.deallocate(_begin, capacity());
+				allo.deallocate(_begin, capacity());
 				_begin = allo.allocate(n);
-				_capacity = n;
+				_end_of_storage = _begin +  n;
 			}
 			for (i = 0; i < n; i++)
-				_alloc.construct(&_begin[i],*first++);
-			_size = _begin + n;
+				allo.construct(&_begin[i],*first++);
+			_end = _begin + n;
 		}
 		template <class InputIterator>
 		void do_assign (InputIterator first, InputIterator last, const std::input_iterator_tag&)
