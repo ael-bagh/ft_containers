@@ -200,7 +200,7 @@ namespace ft
 			for(i = 0; i < size(); i++)
 				allo.destroy(_begin + i);
 			_end = _begin;
-			do_assign(first, last, typename std::iterator_traits<InputIterator>::iterator_category());
+			do_assign(first, last, typename ft::iterator_traits<InputIterator>::iterator_category());
 		}
 		void assign (size_type n, const value_type& val)
 		{
@@ -291,7 +291,7 @@ namespace ft
 		template <class InputIterator>
 		void insert (iterator position, typename enable_if<!is_integral<InputIterator>::value, InputIterator>::type first, InputIterator last)
 		{
-			do_insert(position, first, last, typename std::iterator_traits<InputIterator>::iterator_category());
+			do_insert(position, first, last, typename ft::iterator_traits<InputIterator>::iterator_category());
 		}
 		iterator erase (iterator position)
 		{
