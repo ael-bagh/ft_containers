@@ -1,4 +1,4 @@
-
+#pragma once 
 namespace ft
 {
     template <typename Category, typename T, typename Distance = std::ptrdiff_t,

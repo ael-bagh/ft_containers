@@ -1,4 +1,4 @@
-//set value to true or false
+#pragma once //set value to true or false
 namespace ft
 {
 	template <class T, T v>

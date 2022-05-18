@@ -1,5 +1,7 @@
 #pragma once
-#include "pair.hpp"
+#include "../pair.hpp"
+#include "bidirectional_iterator.hpp"
+#include "../reverse_iterator.hpp"
 namespace ft
 {
     template<class T>   
@@ -27,16 +29,79 @@ namespace ft
             is_black = false;
             is_nil = false;
         }
+        node & operator=(const node & n)
+        {
+            left = n.left;
+            right = n.right;
+            parent = n.parent;
+            is_black = n.is_black;
+            is_nil = n.is_nil;
+            value = n.value;
+            return *this;
+        }
     };
 
-    template<class T, class Compare, class KeyOf,class Allocator > 
+    template<class T>
+    node<T>* minimum(node<T>* node)
+    {
+        while (node->left)
+            node = node->left;
+        return node;
+    }
+
+    template<class T>
+    node<T>* maximum(node<T>* node)
+    {
+        while (node->right)
+            node = node->right;
+        return node;
+    }
+
+    //successor of node
+    template<class T>
+    node<T>* successor(const node<T>* nd)
+    {
+        if (nd->right) {
+            node<T>* tmp = nd->right;
+            while (tmp->left)
+                tmp = tmp->left;
+            return tmp;
+        }
+        node<T>* y = nd->parent;
+        while (y && nd == y->right)
+        {
+            nd = y;
+            y = y->parent;
+        }
+        return y;
+    }
+    //predecessor of node
+    template<class T>
+    node<T>* predecessor(const node<T>* nd)
+    {
+        if (nd->left)
+        {
+            node<T>* tmp = nd->left;
+            while (tmp->right)
+                tmp = tmp->right;
+            return tmp;
+        }
+        node<T>* y = nd->parent;
+        while (y && nd == y->left)
+        {
+            nd = y;
+            y = y->parent;
+        }
+        return y;
+    }
+    template<class T, class key , class Compare, class Allocator > 
     class RB_tree
     {
     public:
         typedef node<T>             node_type;
         typedef node_type*          node_ptr;
-
         typedef T                   value_type;
+        typedef key                 key_type;
         typedef value_type*         pointer;
         typedef const value_type*   const_pointer;
         typedef value_type&         reference;
@@ -44,6 +109,10 @@ namespace ft
         typedef size_t size_type;
         typedef ptrdiff_t difference_type;
         typedef typename Allocator::template rebind<node_type>::other allocator_type;
+        typedef typename ft::bidirectional_iterator<value_type> iterator;
+        typedef typename ft::const_bidirectional_iterator<value_type> const_iterator;
+        typedef typename ft::reverse_iterator<iterator> reverse_iterator;
+        typedef typename ft::reverse_iterator<const_iterator> const_reverse_iterator;
         typedef Compare              key_compare;
         private:
             node_type       end_node;
@@ -53,21 +122,46 @@ namespace ft
 
         public:
 
+            const node_ptr& root() const
+            {
+                return end_node.left;
+            }
             node_ptr& root()
             {
                 return end_node.left;
             }
-
             const node_ptr& nil() const
             {
                 return end_node.parent;
             }
+            RB_tree & operator=(const RB_tree & x)
+            {
+                if (this != &x)
+                {
+                    _allocator = x._allocator;
+                    _compare = x._compare;
+                    clear();
+                    insert(x.begin(), x.end());
+                }
+                return *this;
+            }
 
-            RB_tree()
+            RB_tree() : _compare(Compare())
             {
                 end_node.is_black = true;
+                _size = 0;
             }
-            
+            RB_tree(const key_compare& comp , const allocator_type& alloc) : _allocator(alloc), _compare(comp)
+            {
+                end_node.is_black = true;
+                _size = 0;
+            }
+            RB_tree(const RB_tree & x) : _allocator(x._allocator), _compare(x._compare)
+            {
+                end_node.is_black = true;
+                _size = 0;
+                insert(x.begin(), x.end());
+            }
             ~RB_tree()
             {
 
@@ -85,18 +179,18 @@ namespace ft
             {
                 return _allocator.max_size();
             }
-            node_ptr& find_node(const T& value, node_ptr &parent)
+            node_ptr& find_node_parent(const T& value, node_ptr &parent)
             {
                 parent = &end_node;
                 node_ptr* current = &root();
                 while(*current)
                 {
-                    if (_compare(KeyOf()(value), KeyOf()((*current)->value)))
+                    if (_compare((value), ((*current)->value)))
                     {
                         parent = (*current);
                         current = &parent->left;
                     }
-                    else if (_compare(KeyOf()((*current)->value), KeyOf()(value)))
+                    else if (_compare((*current)->value, (value)))
                     {
                         parent = (*current);
                         current = &parent->right;
@@ -112,11 +206,17 @@ namespace ft
                 return !n || n->is_black;
             }
 
+            template <typename InputIterator>
+            void    insert(InputIterator first, InputIterator last)
+            {
+                while (first != last)
+                    insert(*++first);
+            }
             // TODO: return iterator
             ft::pair<node_ptr, bool> insert(const value_type& value)
             {
                 node_ptr parent;
-                node_ptr &current = find_node(value, parent);
+                node_ptr &current = find_node_parent(value, parent);
                 if (current)
                     return ft::pair<node_ptr, bool>(current, false);
                 current = _allocator.allocate(1);
@@ -126,7 +226,6 @@ namespace ft
                 fix_insert(current);
                 return ft::pair<node_ptr, bool>(current, true);
             }
-
             void    fix_insert(node_ptr node)
             {
                 while (!is_black(node->parent))
@@ -191,30 +290,24 @@ namespace ft
                     v->parent = u->parent;
             
             }
-            node_ptr minimum(node_ptr node)
-            {
-                while (node->left)
-                    node = node->left;
-                return node;
-            }
 
-            node_ptr maximum(node_ptr node)
+            template <typename InputIterator>
+            void    remove(InputIterator first, InputIterator last)
             {
-                while (node->right)
-                    node = node->right;
-                return node;
+                while (first != last)
+                    remove(*++first);
             }
 
             void remove(const value_type& value)
             {
                 node_ptr parent;
-                node_ptr &current = find_node(value, parent);
+                node_ptr &current = find_node_parent(value, parent);
                 if (!current)
                     return;
-                remove(current);
+                rm(current);
             }
 
-            void remove(node_ptr node)
+            void rm(node_ptr node)
             {
 
                 bool original_color = node->is_black;
@@ -262,7 +355,12 @@ namespace ft
                 if (original_color && _size)
                     fix_delete(x, x_parent);
             }
-
+            void clear()
+            {
+                remove(begin(), end());
+                root() = NULL;
+                _size = 0;
+            }
             void fix_delete(node_ptr node, node_ptr parent)
             {
                 while (node != root() && is_black(node))
@@ -339,16 +437,11 @@ namespace ft
                 if( node != nullptr )
                 {
                     std::cout << prefix;
-
                     std::cout << (isLeft ? "├──" : "└──" );
-
-                    // print the value of the node
                     if (node->is_black)
-                    std::cout << node->value << std::endl;
+                        std::cout << node->value << std::endl;
                     else
-                    std::cout << "\033[1;31m" << node->value << "\033[0m" << std::endl;
-
-                    // enter the next tree level - left and right branch
+                        std::cout << "\033[1;31m" << node->value << "\033[0m" << std::endl;
                     printBT( prefix + (isLeft ? "│   " : "    "), node->left, true);
                     printBT( prefix + (isLeft ? "│   " : "    "), node->right, false);
                 }
@@ -396,33 +489,94 @@ namespace ft
                 y->right = x;
                 x->parent = y;
             }
+            iterator begin()
+            {
+                if (root())
+                    return iterator(minimum(root()));
+                return iterator(&end_node);
+            }
+            iterator end()
+            {
+                return iterator(&end_node);
+            }
+            const_iterator begin() const
+            {
+                if (root())
+                    return const_iterator(minimum(root()));
+                return const_iterator(&end_node);
+            }
+            const_iterator end() const
+            {
+                return const_iterator(&end_node);
+            }
+            const_reverse_iterator rbegin() const
+            {
+                return const_reverse_iterator(end());
+            }
+            const_reverse_iterator rend() const
+            {
+                return const_reverse_iterator(begin());
+            }
+            reverse_iterator rbegin()
+            {
+                return reverse_iterator(end());
+            }
+            reverse_iterator rend()
+            {
+                return reverse_iterator(begin());
+            }
+            void erase (iterator position)
+            {
+                remove(position.node);
+            }
+            size_type erase (const key_type& k)
+            {
+                node_ptr node = find(k);
+                if (node)
+                {
+                    erase(iterator(node));
+                    return 1;
+                }
+                return 0;
+            }
 
-            //successor of node
-            node_ptr successor(node_ptr node)
-            {
-                if (node->right)
-                    return minimum(node->right);
-                node_ptr y = node->parent;
-                while (y && node == y->right)
-                {
-                    node = y;
-                    y = y->parent;
-                }
-                return y;
-            }
-            //predecessor of node
-            node_ptr predecessor(node_ptr node)
-            {
-                if (node->left)
-                    return maximum(node->left);
-                node_ptr y = node->parent;
-                while (y && node == y->left)
-                {
-                    node = y;
-                    y = y->parent;
-                }
-                return y;
-            }
     };
+    template<class T, class key , class Compare, class Allocator> 
+    bool operator==(const RB_tree<T,key,Compare,Allocator>& lhs, const RB_tree<T,key,Compare,Allocator>& rhs)
+    {
+        if (lhs.size() != rhs.size())
+            return false;
+        for (typename RB_tree<T,key,Compare,Allocator>::iterator it = lhs.begin(); it != lhs.end(); ++it)
+        {
+            if (rhs.find(*it) == rhs.end())
+                return false;
+        }
+        return true;
+    }
+    template<class T, class key , class Compare, class Allocator>
+    bool operator!=(const RB_tree<T,key,Compare,Allocator> & lhs, const RB_tree<T,key,Compare,Allocator>& rhs)
+    {
+        return !(lhs == rhs);
+    }
+    template<class T, class key , class Compare, class Allocator> 
+    bool operator<(const RB_tree<T,key,Compare,Allocator>& lhs, const RB_tree<T,key,Compare,Allocator>& rhs)
+    {
+        return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+    }
+    template<class T, class key , class Compare, class Allocator> 
+    bool operator<=(const RB_tree<T,key,Compare,Allocator>& lhs, const RB_tree<T,key,Compare,Allocator>& rhs)
+    {
+        return !(rhs < lhs);
+    }
+    template<class T, class key , class Compare, class Allocator>
+    bool operator>(const RB_tree<T,key,Compare,Allocator>& lhs, const RB_tree<T,key,Compare,Allocator>& rhs)
+    {
+        return rhs < lhs;
+    }
+    template<class T, class key , class Compare, class Allocator> 
+    bool operator>=(const RB_tree<T,key,Compare,Allocator>& lhs, const RB_tree<T,key,Compare,Allocator>& rhs)
+    {
+        return !(lhs < rhs);
+    }
 }
 

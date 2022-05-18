@@ -1,3 +1,5 @@
+
+#pragma once
 #include <iostream>
 #include "iterator.hpp"
 #include "reverse_iterator.hpp"
