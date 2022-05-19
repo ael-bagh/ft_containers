@@ -26,15 +26,16 @@ namespace ft
             return _it;
         }
         //operators/////
-        reference operator*() const
+        value_type& operator*() const
         {
             iterator_type tmp = _it;
-            return *--tmp;
+            return *(--tmp);
         }
-        pointer operator->() const
+        value_type * operator->() const
         {
             return &(operator*());
         }
+        
         reverse_iterator& operator++()
         {
             --_it;

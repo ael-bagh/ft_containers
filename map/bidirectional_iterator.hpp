@@ -1,5 +1,6 @@
 #pragma once
 #include "RB_tree.hpp"
+#include "../iterator_traits.hpp"
 namespace ft
 {
     template<class T>   
@@ -16,9 +17,12 @@ namespace ft
     template <class T>
     struct bidirectional_iterator
     {
+            typedef typename std::bidirectional_iterator_tag iterator_category;
             typedef node<T> node_type;
             typedef T value_type;
             typedef node_type* pointer;
+            typedef T& reference;
+            typedef T* ppointer;
             typedef std::ptrdiff_t difference_type;
             bidirectional_iterator(): _ptr(NULL) {}
             bidirectional_iterator(pointer ptr): _ptr(ptr) {}
@@ -63,13 +67,13 @@ namespace ft
             {
                 return !(_ptr == x._ptr);
             }
-            T operator*()
+            reference operator*() const
             {
                 return _ptr->value;
             }
-            T* operator->()
+            ppointer operator->() const
             {
-                return &(_ptr->value);
+                return &(operator*());
             }
         private:
             pointer _ptr;
@@ -78,9 +82,12 @@ namespace ft
     template <class T>
     struct const_bidirectional_iterator
     {
+            typedef typename std::bidirectional_iterator_tag iterator_category;
             typedef node<T> node_type;
-            typedef T value_type;
+            typedef const T value_type;
             typedef const node_type* pointer;
+            typedef const T& reference;
+            typedef const T* ppointer;
             typedef std::ptrdiff_t difference_type;
             const_bidirectional_iterator(): _ptr(NULL) {}
             const_bidirectional_iterator(pointer ptr): _ptr(ptr) {}
@@ -125,16 +132,27 @@ namespace ft
             {
                 return !(_ptr == x._ptr);
             }
-            const T operator*() const
+            reference operator*() const
             {
                 return _ptr->value;
             }
-            const T *operator->() const
+            ppointer operator->() const
             {
-                return &(_ptr->value);
+                return &(operator*());
             }
         private:
             pointer _ptr;
     };
+
+    template <class TL, class TR>
+    bool operator== (const bidirectional_iterator<TL>& x, const bidirectional_iterator<TR>& y)
+    {
+        return x.base() == y.base();
+    }
+    template <class TL, class TR>
+    bool operator!= (const bidirectional_iterator<TL>& x, const bidirectional_iterator<TR>& y)
+    {
+        return x.base() != y.base();
+    }
 }
 
