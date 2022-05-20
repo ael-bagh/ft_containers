@@ -133,6 +133,10 @@ namespace ft
             {
                 return end_node.left;
             }
+            node_ptr& nil()
+            {
+                return end_node.parent;
+            }
             const node_ptr& nil() const
             {
                 return end_node.parent;
@@ -167,7 +171,7 @@ namespace ft
             }
             ~RB_tree()
             {
-
+                clear();
             }
 
             size_type size() const
@@ -338,7 +342,7 @@ namespace ft
             void    remove(InputIterator first, InputIterator last)
             {
                 while (first != last)
-                    remove(*++first);
+                    remove(*(first++));
             }
 
             void remove(const value_type& value)
@@ -348,6 +352,7 @@ namespace ft
                 if (!current)
                     return;
                 rm(current);
+
             }
 
             void rm(node_ptr node)
@@ -394,7 +399,8 @@ namespace ft
                         y->left->parent = y;
                     y->is_black = node->is_black;
                 }
-
+                _allocator.destroy(node);
+                _allocator.deallocate(node, 1);
                 if (original_color && _size)
                     fix_delete(x, x_parent);
             }
@@ -691,14 +697,11 @@ namespace ft
             }
             void swap(RB_tree& other)
             {
-                const node_type* tmp = root();
-                end_node.left = other.end_node.left;
-                other.end_node.left = tmp;
-                tmp = end_node.parent;
-                end_node.parent = other.end_node.parent;
-                other.end_node.parent = tmp;
+                RB_tree tmp(other);
+                other = *this;
+                *this = tmp;
+                std::swap(end_node.parent, other.end_node.parent);
 
-                std::swap(_size, other._size);
             }
     };
     template<class T, class key , class Compare, class Allocator> 
