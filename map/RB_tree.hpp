@@ -191,12 +191,12 @@ namespace ft
                 node_ptr tmp = root();
                 while (tmp != nil())
                 {
-                    if (_compare(k, tmp->value))
-                        tmp = tmp->left;
-                    else if (_compare(tmp->value, k))
-                        tmp = tmp->right;
-                    else
+                    if (!_compare(k, tmp->value) && !_compare(tmp->value, k))
                         return iterator(tmp);
+                    else if (_compare(k, tmp->value))
+                        tmp = tmp->left;
+                    else
+                        tmp = tmp->right;
                 }
                 return end();
             }
@@ -205,12 +205,12 @@ namespace ft
                 node_ptr tmp = root();
                 while (tmp != nil())
                 {
-                    if (_compare(k, tmp->value))
-                        tmp = tmp->left;
-                    else if (_compare(tmp->value, k))
-                        tmp = tmp->right;
-                    else
+                    if (!_compare(k, tmp->value) && !_compare(tmp->value, k))
                         return iterator(tmp);
+                    else if (_compare(k, tmp->value))
+                        tmp = tmp->left;
+                    else
+                        tmp = tmp->right;
                 }
                 return end();
             }
@@ -231,7 +231,7 @@ namespace ft
                         current = &parent->right;
                     }
                     else
-                        return (*current);
+                        return *current;
                 }
                 return (*current);
             }
@@ -342,7 +342,7 @@ namespace ft
             void    remove(InputIterator first, InputIterator last)
             {
                 while (first != last)
-                    remove(*(first++));
+                    rm((first++).base());
             }
 
             void remove(const value_type& value)
@@ -604,16 +604,15 @@ namespace ft
                 node_ptr y = nil();
                 while (tmp != nil())
                 {
-                    
-                    if (_compare(k, tmp->value))
+                    if (!_compare(k, tmp->value) && !_compare(tmp->value, k))
+                        return (iterator(tmp));
+                    else if (_compare(k, tmp->value))
                     {
                         y = tmp;
                         tmp = tmp->left;
                     }
-                    else if (_compare(tmp->value, k))
-                        tmp = tmp->right;
                     else
-                        return (iterator(tmp));
+                        tmp = tmp->right;
                 }
                 if ( y == nil())
                     return end();
@@ -627,16 +626,15 @@ namespace ft
                     return end();
                 while (tmp != nil())
                 {
-                    
-                    if (_compare(k, tmp->value))
+                    if (!_compare(k, tmp->value) && !_compare(tmp->value, k))
+                        return (const_iterator(tmp));
+                    else if (_compare(k, tmp->value))
                     {
                         y = tmp;
                         tmp = tmp->left;
                     }
-                    else if (_compare(tmp->value, k))
-                        tmp = tmp->right;
                     else
-                        return (const_iterator(tmp));
+                        tmp = tmp->right;
                 }
                 if ( y == nil())
                     return end();
@@ -648,16 +646,15 @@ namespace ft
                 node_ptr y = nil();
                 while (tmp != nil())
                 {
-                    
-                    if (_compare(k, tmp->value))
+                    if (!_compare(k, tmp->value) && !_compare(tmp->value, k))
+                        break;
+                    else if (_compare(k, tmp->value))
                     {
                         y = tmp;
                         tmp = tmp->left;
                     }
-                    else if (_compare(tmp->value, k))
-                        tmp = tmp->right;
                     else
-                        break;
+                        tmp = tmp->right;
                 }
                 if ( y == nil())
                     return end();
@@ -671,16 +668,15 @@ namespace ft
                     return end();
                 while (tmp != nil())
                 {
-                    
-                    if (_compare(k, tmp->value))
+                    if (!_compare(k, tmp->value) && !_compare(tmp->value, k))
+                        break;
+                    else if (_compare(k, tmp->value))
                     {
                         y = tmp;
                         tmp = tmp->left;
                     }
-                    else if (_compare(tmp->value, k))
-                        tmp = tmp->right;
                     else
-                        break;
+                        tmp = tmp->right;
                 }
                 if ( y == nil())
                     return end();
@@ -697,11 +693,15 @@ namespace ft
             }
             void swap(RB_tree& other)
             {
-                RB_tree tmp(other);
-                other = *this;
-                *this = tmp;
-                std::swap(end_node.parent, other.end_node.parent);
+                if (end_node.left)
+                    end_node.left->parent = &other.end_node;
+                if (other.end_node.left)
+                    other.end_node.left->parent = &end_node;
 
+                std::swap(end_node.left, other.end_node.left);
+                std::swap(_size, other._size);
+                std::swap(_compare, other._compare);
+                std::swap(_allocator, other._allocator);
             }
     };
     template<class T, class key , class Compare, class Allocator> 
